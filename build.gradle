@@ -1,0 +1,193 @@
+buildscript {
+	ext {
+		kotlinVer = '1.1.2-5'
+		springBootVer = '1.5.4.RELEASE'
+		propdepsPluginVer = '0.0.7'
+		kotlinLoggingVer = '1.4.4'
+		postgesqlVer = '42.1.1'
+		jFairyVer = '0.5.7'
+		dockerComposePluginVer = '0.4.2'
+		flywayVer = '4.2.0'
+	}
+
+	repositories {
+		jcenter()
+		mavenCentral()
+		maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
+		maven { url 'http://repo.spring.io/plugins-release' }
+	}
+
+	dependencies {
+		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVer"
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVer"
+		classpath "org.springframework.build.gradle:propdeps-plugin:$propdepsPluginVer"
+		classpath "gradle.plugin.com.boxfuse.client:flyway-release:$flywayVer"
+		classpath "com.avast.gradle:docker-compose-gradle-plugin:$dockerComposePluginVer"
+	}
+}
+
+plugins {
+	id 'com.palantir.docker' version '0.13.0'
+// gradle dependencyUpdates -Drevision=release
+	id 'com.github.ben-manes.versions' version '0.15.0'
+	id 'nu.studer.jooq' version '2.0.6'
+}
+
+apply plugin: 'kotlin'
+apply plugin: "kotlin-kapt"
+apply plugin: 'application'
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'propdeps'
+apply plugin: 'propdeps-idea'
+apply plugin: 'org.flywaydb.flyway'
+apply plugin: 'nu.studer.jooq'
+apply plugin: 'docker-compose'
+
+group = 'li.barlog.postgres-performance'
+version = '0.1-SNAPSHOT'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+mainClassName = 'li.barlog.AppKt'
+
+compileKotlin {
+	kotlinOptions.jvmTarget = "1.8"
+}
+
+repositories {
+	jcenter()
+	mavenCentral()
+	maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }
+}
+
+configurations {
+	all*.exclude module: 'tomcat-jdbc'
+}
+
+dependencies {
+	compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
+	//compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVer"
+
+	compile "io.github.microutils:kotlin-logging:$kotlinLoggingVer"
+
+	compile 'org.springframework.boot:spring-boot-starter'
+
+	compile 'com.fasterxml.jackson.module:jackson-module-kotlin'
+	compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+	compile 'org.springframework.boot:spring-boot-starter-jooq'
+	compile "org.postgresql:postgresql:$postgesqlVer"
+	jooqRuntime "org.postgresql:postgresql:$postgesqlVer"
+
+	compile "org.flywaydb:flyway-core:$flywayVer"
+
+	compile 'com.zaxxer:HikariCP'
+
+	compile group: 'io.codearte.jfairy', name: 'jfairy', version: jFairyVer
+
+	testCompile 'org.springframework.boot:spring-boot-starter-test'
+
+	kapt 'org.springframework.boot:spring-boot-configuration-processor'
+	optional "org.springframework.boot:spring-boot-configuration-processor"
+}
+
+jar {
+	archiveName = 'app.jar'
+}
+
+// gradle flywayMigrate
+// gradle flywayClean
+// gradle flywayInfo
+// gradle flywayValidate
+
+flyway {
+	url = 'jdbc:postgresql://localhost:5432/postgres'
+	user = 'postgres'
+	password = 'password'
+}
+
+// gradle generateDbJooqSchemaSource --rerun-tasks
+
+jooq {
+	db(sourceSets.main) {
+		jdbc {
+			driver = 'org.postgresql.Driver'
+			url = 'jdbc:postgresql://localhost:5432/postgres'
+			user = 'postgres'
+			password = 'password'
+		}
+		generator {
+			database {
+				name = 'org.jooq.util.postgres.PostgresDatabase'
+				inputSchema = 'public'
+				includes = '.*'
+				customTypes {
+					customType {
+						name = 'Person'
+						type = 'li.barlog.model.Person'
+						binding = 'li.barlog.jooq.PersonBinding'
+					}
+				}
+				forcedTypes {
+					forcedType {
+						userType = 'li.barlog.model.Person'
+						binding = 'li.barlog.jooq.PersonBinding'
+						expression = '.*\\.person.data'
+					}
+				}
+			}
+			generate {
+				relations = true
+				deprecated = false
+				records = true
+				immutablePojos = true
+				fluentSetters = true
+				javaTimeTypes = true
+			}
+			target {
+				packageName = 'li.barlog.model.jooq'
+				directory = 'src/main/java'
+			}
+		}
+	}
+}
+cleanGenerateDbJooqSchemaSource.enabled = false
+generateDbJooqSchemaSource.enabled = false
+
+// https://github.com/avast/docker-compose-gradle-plugin
+// gradle composeUp
+// gradle composeDown
+
+dockerCompose {
+	useComposeFiles = ["${rootDir}/docker/docker-compose.yml"]
+}
+dockerCompose.isRequiredBy(test)
+
+// https://github.com/palantir/gradle-docker
+// gradle docker
+
+docker {
+	dependsOn jar, bootRepackage
+	name 'postgres-performance'
+	tags 'latest'
+	files tasks.jar.outputs
+	dockerfile file('src/main/docker/Dockerfile')
+	buildArgs([
+		PORT     : "8080",
+		JAVA_OPTS: "-XX:+UseG1GC -Xms512m -Xmx2G"
+	])
+	pull true
+}
+
+wrapper {
+	gradleVersion '3.5'
+}
+
+bootRepackage {
+	it.mustRunAfter clean
+}
+
+task stage(dependsOn: ['build', 'clean'])

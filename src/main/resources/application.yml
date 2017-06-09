@@ -1,0 +1,19 @@
+spring:
+  main.banner-mode: "off"
+  application.name: postgres-performance
+  output.ansi.enabled: always
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: password
+
+  jpa:
+    generate-ddl: false
+    hibernate.ddl-auto: validate
+
+  jooq:
+    sql-dialect: POSTGRES_9_5
+
+logging.level.root: INFO
