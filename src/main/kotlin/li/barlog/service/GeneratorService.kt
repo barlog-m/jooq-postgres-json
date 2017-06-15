@@ -2,22 +2,27 @@ package li.barlog.service
 
 import li.barlog.util.createPerson
 import mu.KLogging
+import org.springframework.boot.ApplicationArguments
 import org.springframework.context.event.ContextRefreshedEvent
 import org.springframework.context.event.EventListener
-import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 
 @Service
 class GeneratorService(
-	private val environment: Environment,
-	private val personService: PersonService
+	private val personService: PersonService,
+	private val args: ApplicationArguments
 ) {
 	companion object : KLogging()
 
+	private val generate by lazy {
+		args.containsOption("generate")
+	}
+
 	@EventListener(ContextRefreshedEvent::class)
 	fun generate() {
-		if (environment.activeProfiles.contains("test")) return
+		if (!generate) return
+		logger.info { "generate: $generate" }
 
 		logger.info { "start" }
 		val start = System.currentTimeMillis()

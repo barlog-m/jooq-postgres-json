@@ -1,10 +1,17 @@
 FROM anapsix/alpine-java:8_jdk_unlimited
 
+MAINTAINER barlog@tanelorn.li
+
 ARG JAVA_OPTS
 ARG PORT
 
-ADD sgr.jar /
+ADD app.jar /
 
 EXPOSE $PORT
 
-CMD java $JAVA_OPTS -jar /sgr.jar --server.port=$PORT --storage.path=$STORAGE_PATH --spring.datasource.url=$DATASOURCE_URL --flyway.url=$DATASOURCE_URL
+CMD java $JAVA_OPTS \
+	-Djava.security.egd=file:/dev/./urandom \
+	-jar /app.jar \
+	--server.port=$PORT \
+	--spring.datasource.url=$DATASOURCE_URL \
+	--flyway.url=$DATASOURCE_URL

@@ -42,12 +42,12 @@ public class Public extends SchemaImpl {
     /**
      * The table <code>public.person</code>.
      */
-    public final Person PERSON = li.barlog.model.jooq.tables.Person.PERSON;
+    public final Person PERSON = Person.PERSON;
 
     /**
      * The table <code>public.schema_version</code>.
      */
-    public final SchemaVersion SCHEMA_VERSION = li.barlog.model.jooq.tables.SchemaVersion.SCHEMA_VERSION;
+    public final SchemaVersion SCHEMA_VERSION = SchemaVersion.SCHEMA_VERSION;
 
     /**
      * No further instances allowed

@@ -1,7 +1,9 @@
 package li.barlog.repository
 
 import li.barlog.App
+import li.barlog.model.jooq.tables.Person.PERSON
 import li.barlog.util.createPerson
+import org.jooq.DSLContext
 import org.junit.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.junit.Assert.assertTrue
@@ -9,7 +11,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.runner.RunWith
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.annotation.Propagation
@@ -19,8 +20,10 @@ import org.springframework.transaction.support.DefaultTransactionDefinition
 @RunWith(SpringRunner::class)
 @SpringBootTest(classes = arrayOf(App::class))
 @Transactional
-@ActiveProfiles("test")
 open class PersonRepositoryIT {
+	@Autowired
+	private lateinit var context: DSLContext
+
 	@Autowired
 	private lateinit var fooRepository: PersonRepository
 
@@ -53,6 +56,17 @@ open class PersonRepositoryIT {
 	}
 
 	@Test
+	open fun count() {
+		context.truncate(PERSON).execute()
+
+		fooRepository.insert(createPerson())
+		fooRepository.insert(createPerson())
+		fooRepository.insert(createPerson())
+
+		assertEquals(3, fooRepository.count())
+	}
+
+	@Test
 	@Transactional(propagation = Propagation.NEVER)
 	open fun transaction() {
 		val def = DefaultTransactionDefinition()
@@ -62,5 +76,16 @@ open class PersonRepositoryIT {
 
 		val fileOpt = fooRepository.selectById(id)
 		assertFalse(fileOpt.isPresent)
+	}
+
+	@Test
+	open fun selectByEMail() {
+		val email = "foo@bar.baz"
+		val personRaw = createPerson().copy(email = email)
+		val id = fooRepository.insert(personRaw)
+		val person = personRaw.copy(id = id)
+		val personOptional = fooRepository.selectByEMail(email)
+		assertTrue(personOptional.isPresent)
+		assertEquals(person, personOptional.get())
 	}
 }

@@ -10,15 +10,15 @@ import java.util.Optional
 @Repository
 open class PersonRepository @Autowired constructor(
 	private val context: DSLContext
-	) {
+) {
 	open fun select(): List<Person> = context
 		.selectFrom(PERSON)
-		.fetch {it.data.copy(id = it.id)}
+		.fetch { it.data.copy(id = it.id) }
 
 	open fun selectById(id: Long): Optional<Person> = context
 		.selectFrom(PERSON)
 		.where(PERSON.ID.eq(id))
-		.fetchOptional {it.data.copy(id = it.id)}
+		.fetchOptional { it.data.copy(id = it.id) }
 
 	open fun insert(person: Person): Long = context
 		.insertInto(PERSON)
@@ -31,4 +31,9 @@ open class PersonRepository @Autowired constructor(
 		.selectCount()
 		.from(PERSON)
 		.fetchOne(0, Int::class.java)
+
+	open fun selectByEMail(email: String): Optional<Person> = context
+		.selectFrom(PERSON)
+		.where("data->>'email' = ?", email)
+		.fetchOptional { it.data.copy(id = it.id) }
 }

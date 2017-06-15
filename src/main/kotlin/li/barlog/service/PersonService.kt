@@ -25,9 +25,9 @@ open class PersonService @Autowired constructor(
 	}
 
 	open fun add(foo: Person): Person {
-		val foo = foo.copy(id = personRepository.insert(foo))
-		logger.trace {"foo: $foo"}
-		return foo
+		val fooSaved = foo.copy(id = personRepository.insert(foo))
+		logger.trace {"foo: $fooSaved"}
+		return fooSaved
 	}
 
 	@Transactional(readOnly = true)

@@ -7,12 +7,10 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.runners.MockitoJUnitRunner
-import org.springframework.test.context.ActiveProfiles
 import java.util.Optional
 import org.mockito.Mockito.`when` as whn
 
 @RunWith(MockitoJUnitRunner::class)
-@ActiveProfiles("test")
 class PersonServiceTest {
 	@Mock
 	private lateinit var repository: PersonRepository

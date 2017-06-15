@@ -26,10 +26,10 @@ public class Tables {
     /**
      * The table <code>public.person</code>.
      */
-    public static final Person PERSON = li.barlog.model.jooq.tables.Person.PERSON;
+    public static final Person PERSON = Person.PERSON;
 
     /**
      * The table <code>public.schema_version</code>.
      */
-    public static final SchemaVersion SCHEMA_VERSION = li.barlog.model.jooq.tables.SchemaVersion.SCHEMA_VERSION;
+    public static final SchemaVersion SCHEMA_VERSION = SchemaVersion.SCHEMA_VERSION;
 }

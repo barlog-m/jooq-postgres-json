@@ -7,12 +7,12 @@ import org.junit.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import org.springframework.mock.env.MockEnvironment
+import org.springframework.boot.ApplicationArguments
 
 class GeneratorServiceTest {
-	private val environment = MockEnvironment().apply {addActiveProfile("test")}
 	private val fooService = mock(PersonService::class.java)
-	private val generatorService = GeneratorService(environment, fooService)
+	private val args = mock(ApplicationArguments::class.java)
+	private val generatorService = GeneratorService(fooService, args)
 
 	@Test
 	fun massiveFoo() {
