@@ -91,7 +91,7 @@ dependencies {
 
 	compile 'com.zaxxer:HikariCP'
 
-	compile group: 'io.codearte.jfairy', name: 'jfairy', version: jFairyVer
+	compile "io.codearte.jfairy:jfairy:$jFairyVer"
 
 	testCompile 'org.springframework.boot:spring-boot-starter-test'
 
